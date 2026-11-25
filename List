@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#08090b">
+<meta name="description" content="Meteo mobile con previsioni orarie e radar">
+<title>Meteo Mobile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+:root{color-scheme:dark;--bg:#08090b;--panel:#121418;--line:#252a31;--text:#f5f6f7;--muted:#9ba3ad;--red:#e02b35;--blue:#69b8ef;--green:#55c58a}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}body{min-height:100dvh;display:flex;justify-content:center}.app{width:min(100%,520px);min-height:100dvh;padding:max(12px,env(safe-area-inset-top)) 14px max(12px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px}
+header{display:grid;gap:10px}.topline,.searchrow,.current,.current-foot,.radar-tools{display:flex;align-items:center;justify-content:space-between;gap:10px}.status{font:700 10px 'Space Mono',monospace;letter-spacing:.8px;color:var(--muted);display:flex;align-items:center;gap:7px}.dot{width:8px;height:8px;border-radius:50%;background:var(--green)}.dot.busy{background:#e5ae47;animation:pulse 1.2s infinite}.dot.error{background:var(--red)}@keyframes pulse{50%{opacity:.35}}
+button,input{font:inherit}button{cursor:pointer;color:inherit}.ghost,.fav{border:1px solid var(--line);background:#1a1d22;border-radius:12px;padding:8px 11px}.ghost{font-size:11px;font-weight:700}.searchrow{align-items:stretch}#search{width:100%;min-width:0;height:52px;padding:0 18px;border-radius:28px;background:var(--panel);border:1px solid var(--line);color:var(--text);font:700 20px 'Space Mono',monospace;outline:none}#search:focus{border-color:#68727e}.fav{width:52px;flex:none;font-size:22px;color:#777}.fav.active{color:#ffd45a}.searchwrap{position:relative;flex:1;min-width:0}.suggestions{display:none;position:absolute;z-index:1200;top:57px;left:0;right:0;max-height:220px;overflow:auto;background:#1a1d22;border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 28px #0009}.suggestion{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:12px 14px;font-size:13px}.suggestion:last-child{border:0}.suggestion small{color:var(--muted)}.favorites{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none}.pill{white-space:nowrap;border:1px solid var(--line);background:#171a1f;color:#dce0e5;border-radius:20px;padding:6px 11px;font-size:11px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px}.current{min-height:132px}.temperature{font:700 clamp(58px,15vw,76px)/.95 'Space Mono',monospace;letter-spacing:-4px}.sub{font-size:12px;color:var(--muted);margin-top:8px}.sub strong{color:var(--text)}.weather-icon{width:92px;height:92px;display:grid;place-items:center;font-size:62px}.desc{font-size:14px;font-weight:700}.current-foot{border-top:1px solid var(--line);padding-top:12px;margin-top:10px;font-size:12px;color:var(--muted)}.minmax{display:flex;gap:12px}.minmax b:first-child{color:var(--blue)}.minmax b:last-child{color:#ff777e}.section-head{display:flex;justify-content:space-between;align-items:center;margin:0 2px 9px}.section-head h2{font-size:12px;letter-spacing:.7px;text-transform:uppercase;margin:0}.section-head span{font-size:10px;color:var(--muted)}.hours{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.hour{flex:0 0 82px;background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:10px 7px;display:grid;justify-items:center;gap:8px}.hour time{font-size:11px;color:var(--muted)}.hour .ico{font-size:27px;height:32px}.hour strong{font-size:16px}.hour small{font-size:10px;color:var(--blue)}
+.map-panel{padding:10px}.map-head{padding:2px 3px 9px;display:flex;justify-content:space-between;align-items:center}.map-head strong{font-size:12px}.map-head span{font-size:10px;color:var(--muted)}#map{height:clamp(190px,30vh,280px);border-radius:13px;background:#0c0f12}.radar-tools{padding:9px 3px 1px}.play{width:36px;height:36px;border:0;border-radius:50%;background:#292e35;font-weight:800}.radar-tools input{flex:1;min-width:0;accent-color:var(--red)}.radar-time{font:700 11px 'Space Mono',monospace;min-width:44px;text-align:right}.credits{text-align:center;color:#69717b;font-size:9px;padding:0 0 2px}.notice{color:var(--muted);font-size:11px;line-height:1.4;min-height:14px}.leaflet-control-attribution{font-size:9px!important}.leaflet-control-attribution a{color:#b9c4cf!important}
+@media(max-height:720px){.app{gap:8px;padding-top:8px}.panel{padding:12px}.current{min-height:105px}.weather-icon{width:76px;height:76px;font-size:52px}#map{height:180px}.temperature{font-size:58px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<main class="app">
+<header>
+ <div class="topline"><div class="status"><i id="statusDot" class="dot"></i><span id="statusText">AVVIO…</span></div><div style="display:flex;gap:7px"><button id="gpsBtn" class="ghost" type="button" title="Usa la posizione attuale">⌖ POSIZIONE</button><button id="fullscreenBtn" class="ghost" type="button" title="Schermo intero">⛶</button></div></div>
+ <div class="searchrow"><div class="searchwrap"><input id="search" type="search" placeholder="Cerca località…" autocomplete="off" aria-label="Cerca una località"><div id="suggestions" class="suggestions" role="listbox"></div></div><button id="favBtn" class="fav" type="button" aria-label="Aggiungi ai preferiti" title="Aggiungi ai preferiti">★</button></div>
+ <div id="favorites" class="favorites" aria-label="Località preferite"></div>
+</header>
+<section class="panel" aria-label="Condizioni meteo attuali">
+ <div class="current"><div><div id="temp" class="temperature">--°</div><div class="sub">Percepita <strong id="feels">--°</strong> · Umidità <strong id="humidity">--%</strong></div></div><div id="icon" class="weather-icon" aria-hidden="true">🌤️</div></div>
+ <div class="current-foot"><span><span id="description" class="desc">In attesa dei dati…</span><small id="moonPhase" style="display:none;color:var(--muted);margin-left:7px"></small></span><span class="minmax"><b>↓ <span id="min">--°</span></b><b>↑ <span id="max">--°</span></b></span></div>
+</section>
+<section aria-label="Previsioni orarie"><div class="section-head"><h2>Prossime ore</h2><span id="forecastInfo">PREVISIONE ORARIA</span></div><div id="hours" class="hours"></div></section>
+<section class="panel map-panel" aria-label="Radar meteo"><div class="map-head"><strong>RADAR PRECIPITAZIONI</strong><span id="radarStatus">Caricamento radar…</span></div><div id="map"></div><div class="radar-tools"><button id="play" class="play" type="button" aria-label="Avvia o ferma animazione">Ⅱ</button><input id="slider" type="range" min="0" max="0" value="0" step="1" aria-label="Seleziona fotogramma radar"><span id="radarTime" class="radar-time">--:--</span></div></section>
+<div id="notice" class="notice" role="status" aria-live="polite"></div>
+<footer class="credits">sviluppato da un'idea di Nelvis Sovilla · dati Open-Meteo · radar RainViewer · mappa Esri</footer>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const STORAGE = {place:'meteo.place.v2',weather:'meteo.weather.v2',favorites:'meteo.favorites.v2'};
+const DEFAULT_PLACE = {name:'Belluno',lat:46.1384,lon:12.2163};
+const WMO = {
+  0:['Sereno','☀️','🌙'],1:['Prevalentemente sereno','🌤️','🌙'],2:['Parzialmente nuvoloso','⛅','☁️'],3:['Coperto','☁️','☁️'],
+  45:['Nebbia','🌫️','🌫️'],48:['Nebbia intensa','🌫️','🌫️'],51:['Pioviggine debole','🌦️','🌧️'],53:['Pioviggine','🌦️','🌧️'],55:['Pioviggine intensa','🌧️','🌧️'],
+  56:['Pioviggine gelata','🌧️','🌧️'],57:['Pioviggine gelata intensa','🌧️','🌧️'],61:['Pioggia debole','🌦️','🌧️'],63:['Pioggia moderata','🌧️','🌧️'],65:['Pioggia forte','🌧️','🌧️'],
+  66:['Pioggia gelata','🌧️','🌧️'],67:['Pioggia gelata forte','🌧️','🌧️'],71:['Neve debole','🌨️','🌨️'],73:['Neve moderata','🌨️','🌨️'],75:['Neve forte','❄️','❄️'],77:['Nevischio','🌨️','🌨️'],
+  80:['Rovesci deboli','🌦️','🌧️'],81:['Rovesci moderati','🌧️','🌧️'],82:['Rovesci forti','⛈️','⛈️'],85:['Rovesci nevosi','🌨️','🌨️'],86:['Rovesci nevosi intensi','🌨️','🌨️'],95:['Temporale','⛈️','⛈️'],96:['Temporale con grandine','⛈️','⛈️'],99:['Temporale forte con grandine','⛈️','⛈️']
+};
+let place = readJSON(STORAGE.place,DEFAULT_PLACE), favorites = readJSON(STORAGE.favorites,['Bologna','Belluno']);
+let map, marker, radarLayer, cloudLayer, radarFrames=[], satelliteFrames=[], frameIndex=0, playing=false, timer=null;
+let weatherController=null, searchController=null, requestSerial=0, suggestionTimer=null;
+function readJSON(key,fallback){try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback}catch{return fallback}}
+function persistPlace(){localStorage.setItem(STORAGE.place,JSON.stringify(place))}
+function setStatus(message,state='ok'){$('statusText').textContent=message;$('statusDot').className='dot'+(state==='busy'?' busy':state==='error'?' error':'')}
+function safeNumber(value,fallback='--'){return Number.isFinite(Number(value))?Math.round(Number(value)):fallback}
+function setNotice(message=''){$('notice').textContent=message}
+function weatherDescription(code,isDay){const v=WMO[code]||['Condizioni variabili','🌤️','🌙'];return {description:v[0],icon:isDay?v[1]:v[2]}}
+function moonPhase(date=new Date()){let y=date.getFullYear(),m=date.getMonth()+1,d=date.getDate();if(m<3){y--;m+=12}m++;let jd=(365.25*y+30.6*m+d-694039.09)/29.5305882;let p=jd-Math.floor(jd);if(p<.06||p>=.94)return 'Luna nuova';if(p<.24)return 'Crescente';if(p<.26)return 'Primo quarto';if(p<.49)return 'Gibbosa crescente';if(p<.51)return 'Luna piena';if(p<.74)return 'Gibbosa calante';if(p<.76)return 'Ultimo quarto';return 'Calante'}
+function renderCached(expectedLat=place.lat,expectedLon=place.lon){const cached=readJSON(STORAGE.weather,null);if(!cached?.data||!Number.isFinite(cached.lat)||!Number.isFinite(cached.lon))return false;if(Math.abs(cached.lat-expectedLat)>.01||Math.abs(cached.lon-expectedLon)>.01)return false;try{renderWeather(cached.data);setNotice('Dati memorizzati · '+new Date(cached.savedAt).toLocaleString('it-IT'));return true}catch(e){console.warn('Cache meteo non valida',e);return false}}
+function renderWeather(data){
+ const c=data?.current,h=data?.hourly,d=data?.daily;if(!c||!h?.time?.length)throw new Error('Dati meteo incompleti');
+ const info=weatherDescription(c.weather_code,c.is_day===1);
+ $('temp').textContent=safeNumber(c.temperature_2m)+'°';$('feels').textContent=safeNumber(c.apparent_temperature)+'°';$('humidity').textContent=safeNumber(c.relative_humidity_2m)+'%';$('icon').textContent=info.icon;$('description').textContent=info.description;$('moonPhase').style.display=c.is_day===1?'none':'inline';$('moonPhase').textContent=c.is_day===1?'':'· '+moonPhase();
+ if(d?.temperature_2m_min?.length){$('min').textContent=safeNumber(d.temperature_2m_min[0])+'°';$('max').textContent=safeNumber(d.temperature_2m_max[0])+'°'}
+ // L'orario restituito dall'API è già nel fuso della località (timezone=auto): non usare l'orologio del dispositivo.
+ const currentTime=String(c.time||'');let start=h.time.findIndex(t=>t>=currentTime);if(start<0)start=0;
+ const hours=$('hours');hours.replaceChildren();const end=Math.min(start+12,h.time.length);
+ for(let i=start;i<end;i++){
+  const code=h.weather_code?.[i]??c.weather_code,isDay=(h.is_day?.[i]??c.is_day)===1,wi=weatherDescription(code,isDay);
+  const time=h.time[i].slice(11,16),temp=safeNumber(h.temperature_2m?.[i]),feels=safeNumber(h.apparent_temperature?.[i]),prob=h.precipitation_probability?.[i];
+  const card=document.createElement('article');card.className='hour';
+  const tm=document.createElement('time');tm.textContent=time;const ico=document.createElement('span');ico.className='ico';ico.textContent=wi.icon;ico.setAttribute('aria-label',wi.description);
+  const t=document.createElement('strong');t.textContent=temp+'°';const p=document.createElement('small');p.textContent=(Number.isFinite(prob)?prob:0)+'% pioggia';
+  card.append(tm,ico,t,p);hours.append(card);
+ }
+ $('forecastInfo').textContent=`${Math.max(0,end-start)} ORE · ORA LOCALE`;
+}
+async function fetchJSON(url,{signal,timeout=12000}={}){const ctl=new AbortController();const abort=()=>ctl.abort();if(signal)signal.addEventListener('abort',abort,{once:true});const id=setTimeout(abort,timeout);try{const response=await fetch(url,{signal:ctl.signal,headers:{Accept:'application/json'}});if(!response.ok)throw new Error(`HTTP ${response.status}`);return await response.json()}finally{clearTimeout(id);if(signal)signal.removeEventListener('abort',abort)}}
+async function fetchWeather(lat,lon,{name=place.name,status='ONLINE'}={}){
+ if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)throw new Error('Coordinate non valide');
+ if(weatherController)weatherController.abort();weatherController=new AbortController();const serial=++requestSerial;setStatus('AGGIORNAMENTO…','busy');
+ const params=new URLSearchParams({latitude:String(lat),longitude:String(lon),models:'best_match',current:'temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m',hourly:'temperature_2m,apparent_temperature,precipitation_probability,weather_code,is_day,wind_speed_10m',daily:'temperature_2m_max,temperature_2m_min',timezone:'auto',forecast_days:'2'});
+ try{const data=await fetchJSON('https://api.open-meteo.com/v1/forecast?'+params,{signal:weatherController.signal});if(serial!==requestSerial)return;if(data.error)throw new Error(data.reason||'Risposta Open-Meteo non valida');renderWeather(data);place={name,lat,lon};persistPlace();localStorage.setItem(STORAGE.weather,JSON.stringify({data,savedAt:Date.now(),lat,lon}));$('search').value=name;updateFavoriteButton();setStatus(status);setNotice('Aggiornato alle '+new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}));updateMap(lat,lon);fetchRadar();}
+ catch(error){if(error.name==='AbortError')return;console.error('Meteo:',error);setStatus('DATI NON AGGIORNATI','error');setNotice('Impossibile aggiornare il meteo. '+(renderCached(lat,lon)?'Visualizzo gli ultimi dati disponibili per questa località.':'Controlla la connessione e riprova.'));}
+}
+function updateMap(lat,lon){if(!map)return;map.setView([lat,lon],7);if(marker)marker.setLatLng([lat,lon]);else marker=L.circleMarker([lat,lon],{radius:7,color:'#fff',weight:2,fillColor:'#e02b35',fillOpacity:1}).addTo(map).bindPopup(place.name)}
+function initMap(){map=L.map('map',{zoomControl:false,scrollWheelZoom:false}).setView([place.lat,place.lon],7);L.control.zoom({position:'topright'}).addTo(map);
+ const esri='Tiles &copy; Esri — Sources: Esri, HERE, Garmin, USGS, Intermap, INCREMENT P, NRCAN, METI, TomTom, and the GIS User Community';
+ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{maxZoom:16,attribution:esri}).addTo(map);
+ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',{maxZoom:16,attribution:esri}).addTo(map);
+ updateMap(place.lat,place.lon);setTimeout(()=>map.invalidateSize(),250);
+}
+async function fetchRadar(){try{const data=await fetchJSON('https://api.rainviewer.com/public/weather-maps.json');radarFrames=data?.radar?.past||[];satelliteFrames=data?.satellite?.infrared||[];if(!radarFrames.length)throw new Error('Nessun fotogramma radar disponibile');$('slider').max=radarFrames.length-1;frameIndex=radarFrames.length-1;setRadarFrame(frameIndex);$('radarStatus').textContent='Osservazioni recenti';startAnimation();}catch(e){console.warn('Radar:',e);$('radarStatus').textContent='Radar non disponibile';stopAnimation()}}
+function setRadarFrame(index){if(!map||!radarFrames[index])return;frameIndex=Math.max(0,Math.min(index,radarFrames.length-1));const frame=radarFrames[frameIndex];const radarUrl=`https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
+ if(!radarLayer){radarLayer=L.tileLayer(radarUrl,{opacity:.72,maxNativeZoom:7,maxZoom:16,attribution:'Radar &copy; <a href="https://www.rainviewer.com/">RainViewer</a>'}).addTo(map)}else radarLayer.setUrl(radarUrl);
+ const sat=satelliteFrames[Math.min(frameIndex,satelliteFrames.length-1)];if(sat){const cloudUrl=`https://tilecache.rainviewer.com${sat.path}/256/{z}/{x}/{y}/0/0_0.png`;if(!cloudLayer)cloudLayer=L.tileLayer(cloudUrl,{opacity:.22,maxNativeZoom:7,maxZoom:16,attribution:'Satellite &copy; RainViewer'}).addTo(map);else cloudLayer.setUrl(cloudUrl)}else if(cloudLayer){map.removeLayer(cloudLayer);cloudLayer=null}
+ $('slider').value=frameIndex;$('radarTime').textContent=new Date(frame.time*1000).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+}
+function startAnimation(){stopAnimation();if(radarFrames.length<2)return;playing=true;$('play').textContent='Ⅱ';const tick=()=>{if(!playing)return;setRadarFrame(frameIndex);frameIndex=(frameIndex+1)%radarFrames.length;timer=setTimeout(tick,800)};tick()}
+function stopAnimation(){playing=false;if(timer)clearTimeout(timer);timer=null;$('play').textContent='▶'}
+function toggleAnimation(){playing?stopAnimation():startAnimation()}
+async function geocode(query,signal){const url='https://geocoding-api.open-meteo.com/v1/search?'+new URLSearchParams({name:query,count:'6',language:'it',format:'json'});return fetchJSON(url,{signal,timeout:10000})}
+function cityLabel(city){return [city.name,city.admin1,city.country].filter(Boolean).join(' · ')}
+function chooseCity(city){$('suggestions').style.display='none';place={name:city.name,lat:city.latitude,lon:city.longitude};fetchWeather(place.lat,place.lon,{name:place.name})}
+async function showSuggestions(query){if(searchController)searchController.abort();searchController=new AbortController();const ctl=searchController;try{const data=await geocode(query,ctl.signal);if(ctl!==searchController)return;const box=$('suggestions');box.replaceChildren();(data.results||[]).forEach(city=>{const b=document.createElement('button');b.type='button';b.className='suggestion';b.setAttribute('role','option');const name=document.createElement('span');name.textContent=city.name+' ';const detail=document.createElement('small');detail.textContent=[city.admin1,city.country].filter(Boolean).join(' · ');b.append(name,detail);b.addEventListener('click',()=>chooseCity(city));box.append(b)});box.style.display=box.childElementCount?'block':'none'}catch(e){if(e.name!=='AbortError')console.warn('Geocoding:',e)}}
+async function searchCity(query){query=query.trim();if(query.length<2)return;setStatus('RICERCA…','busy');try{const data=await geocode(query);if(!data.results?.length){setStatus('LOCALITÀ NON TROVATA','error');return}if(data.results.length>1){showSuggestions(query);setStatus('SELEZIONA LA LOCALITÀ');return}chooseCity(data.results[0])}catch(e){console.error(e);setStatus('ERRORE RICERCA','error')}}
+function renderFavorites(){const box=$('favorites');box.replaceChildren();favorites.forEach(name=>{const b=document.createElement('button');b.className='pill';b.type='button';b.textContent=name;b.addEventListener('click',()=>searchCity(name));box.append(b)});updateFavoriteButton()}
+function updateFavoriteButton(){const active=favorites.includes(place.name);$('favBtn').classList.toggle('active',active);$('favBtn').setAttribute('aria-pressed',String(active));$('favBtn').title=active?'Rimuovi dai preferiti':'Aggiungi ai preferiti'}
+function toggleFavorite(){const i=favorites.indexOf(place.name);if(i>=0)favorites.splice(i,1);else favorites.push(place.name);localStorage.setItem(STORAGE.favorites,JSON.stringify(favorites));renderFavorites()}
+function locate(){if(!navigator.geolocation){setStatus('GPS NON SUPPORTATO','error');return}setStatus('RICERCA GPS…','busy');navigator.geolocation.getCurrentPosition(async p=>{const {latitude,longitude}=p.coords;let name='Posizione attuale';try{const u='https://nominatim.openstreetmap.org/reverse?'+new URLSearchParams({lat:latitude,lon:longitude,format:'jsonv2','accept-language':'it'});const d=await fetchJSON(u,{timeout:9000});name=d.address?.city||d.address?.town||d.address?.village||d.address?.municipality||name}catch(e){console.warn('Reverse geocoding:',e)}fetchWeather(latitude,longitude,{name})},e=>{console.warn('GPS:',e);setStatus(e.code===1?'GPS NEGATO':'GPS NON DISPONIBILE','error');setNotice('Uso la località salvata, se disponibile.')},{enableHighAccuracy:true,timeout:12000,maximumAge:300000})}
+function init(){initMap();renderFavorites();$('search').value=place.name;updateFavoriteButton();const cached=renderCached();setStatus(cached?'DATI IN CACHE':'CONNESSIONE…',cached?'ok':'busy');fetchWeather(place.lat,place.lon,{name:place.name,status:'ONLINE'});$('gpsBtn').addEventListener('click',locate);$('favBtn').addEventListener('click',toggleFavorite);$('fullscreenBtn').addEventListener('click',async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch(e){setNotice('Schermo intero non disponibile in questo browser.')}});$('play').addEventListener('click',toggleAnimation);$('slider').addEventListener('input',e=>{stopAnimation();setRadarFrame(Number(e.target.value))});$('search').addEventListener('input',e=>{const q=e.target.value.trim();clearTimeout(suggestionTimer);if(q.length<2){$('suggestions').style.display='none';return}suggestionTimer=setTimeout(()=>showSuggestions(q),280)});$('search').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();searchCity(e.target.value);e.target.blur()}if(e.key==='Escape')$('suggestions').style.display='none'});document.addEventListener('click',e=>{if(!e.target.closest('.searchwrap'))$('suggestions').style.display='none'});}
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
